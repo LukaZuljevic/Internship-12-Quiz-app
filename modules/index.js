@@ -132,10 +132,12 @@ function checkAnswer(item, selectedAnswer) {
     if (isCorrect) {
       score++;
       selectedAnswer.classList.add("correct");
+    } else {
+      selectedAnswer.classList.add("incorrect");
     }
     return true;
   } else {
-    selectedAnswer.classList.add("incorrect");
+    selectedAnswer.classList.remove("selected-answer");
     return false;
   }
 }
