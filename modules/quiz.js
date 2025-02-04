@@ -1,52 +1,18 @@
-import { fetchTriviaQuiz } from "./api.js";
+import { resetAnswerStyles } from "./helpers.js";
 
-const form = document.querySelector("form");
-const submitButton = document.querySelector("#submit-button");
 const quizContainer = document.querySelector(".quiz-container");
-const body = document.querySelector("body");
 
 let nextButton = null;
-
 let score = 0;
+
+let timerElement = null;
 let timerInterval;
 let remainingTime = 20;
 let isPaused = false;
-let timerElement = null;
-
-submitButton.addEventListener("click", async (event) => {
-  event.preventDefault();
-
-  const category = document.querySelector("#category").value;
-  const difficulty = document.querySelector("#difficulty").value;
-  const gameType = document.querySelector("#game-type").value;
-
-  const params = new URLSearchParams({
-    amount: 5,
-    difficulty: difficulty,
-    type: gameType,
-  });
-
-  if (category) params.append("category", category);
-
-  const data = await fetchTriviaQuiz(params);
-
-  if (data.length > 0) {
-    form.style.display = "none";
-    createStartButton(data);
-  }
-});
-
-function createStartButton(data) {
-  const startButton = document.createElement("button");
-  startButton.textContent = "Start Quiz";
-  startButton.classList.add("start-button");
-  startButton.addEventListener("click", () => showQuiz(data, startButton));
-
-  body.appendChild(startButton);
-}
 
 function showQuiz(data, startButton) {
   let currentQuestionIndex = 0;
+
   startButton.style.display = "none";
   quizContainer.style.display = "block";
 
@@ -55,8 +21,9 @@ function showQuiz(data, startButton) {
 
 function displayQuestion(currentQuestionIndex, data) {
   quizContainer.innerHTML = "";
+
   isPaused = false;
-  remainingTime = 5;
+  remainingTime = 20;
 
   if (currentQuestionIndex === data.length) {
     showResults();
@@ -74,7 +41,8 @@ function displayQuestion(currentQuestionIndex, data) {
 
 function appendQuestion(item) {
   const question = document.createElement("h3");
-  question.innerHTML = item.question;
+
+  question.textContent = item.question;
   quizContainer.appendChild(question);
 }
 
@@ -89,6 +57,7 @@ function appendAnswers(currentQuestionIndex, data, item) {
 
   answers.forEach((answer) => {
     const answerBlock = document.createElement("button");
+
     answerBlock.textContent = answer;
     answerBlock.classList.add("answer-button");
 
@@ -102,13 +71,10 @@ function appendAnswers(currentQuestionIndex, data, item) {
       selectedAnswer = event.target;
       selectedAnswer.classList.add("selected-answer");
 
-      if (!isPaused) {
-        clearInterval(timerInterval);
-        isPaused = true;
-      }
+      if (!isPaused) isPaused = true;
 
       confirmTimeout = setTimeout(() => {
-        const isConfirmed = checkAnswer(correctAnswer, selectedAnswer, answer);
+        const isConfirmed = checkAnswer(correctAnswer, selectedAnswer);
 
         if (isConfirmed) {
           nextButton = createNextButton(currentQuestionIndex, data);
@@ -124,30 +90,14 @@ function appendAnswers(currentQuestionIndex, data, item) {
   });
 }
 
-function resetAnswerStyles() {
-  document.querySelectorAll(".answer-button").forEach((button) => {
-    button.classList.remove("selected-answer", "correct", "incorrect");
-  });
-}
-
-function checkAnswer(correctAnswer, selectedAnswer, answer) {
-  const isCorrect = correctAnswer.textContent === selectedAnswer.textContent;
-
-  if (confirm("Potvrdi odgovor?")) {
-    addScoreAndButtonStyle(correctAnswer, selectedAnswer, isCorrect, answer);
-    return true;
-  } else {
-    selectedAnswer.classList.remove("selected-answer");
-    return false;
-  }
-}
-
-function setQuestionTimer(currentQuestionIndex, data, resumeTime = 5) {
+function setQuestionTimer(currentQuestionIndex, data, resumeTime) {
   clearInterval(timerInterval);
   remainingTime = resumeTime;
 
   if (!timerElement || !quizContainer.contains(timerElement)) {
     timerElement = document.createElement("p");
+
+    timerElement.classList.add("timer");
     quizContainer.appendChild(timerElement);
   }
 
@@ -161,29 +111,29 @@ function setQuestionTimer(currentQuestionIndex, data, resumeTime = 5) {
       if (remainingTime === 0) {
         clearInterval(timerInterval);
 
-        document.querySelectorAll(".answer-button").forEach((button) => {
-          if (
-            button.textContent === data[currentQuestionIndex].correct_answer
-          ) {
-            button.classList.add("correct");
-          }
-        });
-
+        showCorrectAnswer(data, currentQuestionIndex);
         nextButton = createNextButton(currentQuestionIndex, data);
+
         quizContainer.appendChild(nextButton);
       }
     }
   }, 1000);
 }
 
-function showResults() {
-  quizContainer.innerHTML = `<p>Your score: ${score} / 5</p>`;
-  quizContainer.classList.add("quiz-results");
-  timerElement = null;
+function checkAnswer(correctAnswer, selectedAnswer) {
+  if (!confirm("Potvrdi odgovor?")) {
+    selectedAnswer.classList.remove("selected-answer");
+    return false;
+  }
+
+  const isCorrect = correctAnswer.textContent === selectedAnswer.textContent;
+  updateScoreAndStyle(correctAnswer, selectedAnswer, isCorrect);
+  return true;
 }
 
 function createNextButton(currentQuestionIndex, data) {
   const nextButton = document.createElement("button");
+
   nextButton.textContent = "Next question";
   nextButton.classList.add("start-button");
   nextButton.addEventListener("click", () =>
@@ -193,19 +143,26 @@ function createNextButton(currentQuestionIndex, data) {
   return nextButton;
 }
 
-function addScoreAndButtonStyle(
-  correctAnswer,
-  selectedAnswer,
-  isCorrect,
-  answer
-) {
+function updateScoreAndStyle(correctAnswer, selectedAnswer, isCorrect) {
+  selectedAnswer.classList.add(isCorrect ? "correct" : "incorrect");
+
   if (isCorrect) {
     score++;
-    selectedAnswer.classList.add("correct");
   } else {
-    selectedAnswer.classList.add("incorrect");
-  }
-
-  if (correctAnswer.textContent !== answer)
     correctAnswer.classList.add("correct");
+  }
 }
+
+function showCorrectAnswer(data, currentQuestionIndex) {
+  document.querySelectorAll(".answer-button").forEach((button) => {
+    if (button.textContent === data[currentQuestionIndex].correct_answer)
+      button.classList.add("correct");
+  });
+}
+
+function showResults() {
+  quizContainer.innerHTML = `<p class="quiz-results">Your score: ${score} / 5</p>`;
+  quizContainer.classList.add("quiz-results-container");
+}
+
+export { showQuiz };
