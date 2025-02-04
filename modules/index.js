@@ -5,6 +5,8 @@ const submitButton = document.querySelector("#submit-button");
 const quizContainer = document.querySelector(".quiz-container");
 const body = document.querySelector("body");
 
+let nextButton = null;
+
 let score = 0;
 let timerInterval;
 let remainingTime = 20;
@@ -54,7 +56,7 @@ function showQuiz(data, startButton) {
 function displayQuestion(currentQuestionIndex, data) {
   quizContainer.innerHTML = "";
   isPaused = false;
-  remainingTime = 20;
+  remainingTime = 5;
 
   if (currentQuestionIndex === data.length) {
     showResults();
@@ -65,7 +67,7 @@ function displayQuestion(currentQuestionIndex, data) {
 
   appendQuestion(item);
 
-  getAnswers(currentQuestionIndex, data, item);
+  appendAnswers(currentQuestionIndex, data, item);
 
   setQuestionTimer(currentQuestionIndex, data, remainingTime);
 }
@@ -76,18 +78,22 @@ function appendQuestion(item) {
   quizContainer.appendChild(question);
 }
 
-function getAnswers(currentQuestionIndex, data, item) {
+function appendAnswers(currentQuestionIndex, data, item) {
   const answers = [...item.incorrect_answers, item.correct_answer].sort(
     () => Math.random() - 0.5
   );
 
   let selectedAnswer = null;
   let confirmTimeout;
+  let correctAnswer;
 
   answers.forEach((answer) => {
     const answerBlock = document.createElement("button");
     answerBlock.textContent = answer;
     answerBlock.classList.add("answer-button");
+
+    if (answerBlock.textContent === item.correct_answer)
+      correctAnswer = answerBlock;
 
     answerBlock.addEventListener("click", (event) => {
       clearTimeout(confirmTimeout);
@@ -102,14 +108,13 @@ function getAnswers(currentQuestionIndex, data, item) {
       }
 
       confirmTimeout = setTimeout(() => {
-        const isConfirmed = checkAnswer(item, selectedAnswer);
+        const isConfirmed = checkAnswer(correctAnswer, selectedAnswer, answer);
 
         if (isConfirmed) {
-          showAnswerFeedback(selectedAnswer, isConfirmed);
-          displayQuestion(currentQuestionIndex + 1, data);
+          nextButton = createNextButton(currentQuestionIndex, data);
+          quizContainer.appendChild(nextButton);
         } else {
           isPaused = false;
-
           setQuestionTimer(currentQuestionIndex, data, remainingTime);
         }
       }, 2000);
@@ -125,16 +130,11 @@ function resetAnswerStyles() {
   });
 }
 
-function checkAnswer(item, selectedAnswer) {
-  const isCorrect = item.correct_answer === selectedAnswer.textContent;
+function checkAnswer(correctAnswer, selectedAnswer, answer) {
+  const isCorrect = correctAnswer.textContent === selectedAnswer.textContent;
 
   if (confirm("Potvrdi odgovor?")) {
-    if (isCorrect) {
-      score++;
-      selectedAnswer.classList.add("correct");
-    } else {
-      selectedAnswer.classList.add("incorrect");
-    }
+    addScoreAndButtonStyle(correctAnswer, selectedAnswer, isCorrect, answer);
     return true;
   } else {
     selectedAnswer.classList.remove("selected-answer");
@@ -142,11 +142,7 @@ function checkAnswer(item, selectedAnswer) {
   }
 }
 
-function showAnswerFeedback(selectedAnswer, isCorrect) {
-  selectedAnswer.classList.add(isCorrect ? "correct" : "incorrect");
-}
-
-function setQuestionTimer(currentQuestionIndex, data, resumeTime = 20) {
+function setQuestionTimer(currentQuestionIndex, data, resumeTime = 5) {
   clearInterval(timerInterval);
   remainingTime = resumeTime;
 
@@ -164,7 +160,17 @@ function setQuestionTimer(currentQuestionIndex, data, resumeTime = 20) {
 
       if (remainingTime === 0) {
         clearInterval(timerInterval);
-        displayQuestion(currentQuestionIndex + 1, data);
+
+        document.querySelectorAll(".answer-button").forEach((button) => {
+          if (
+            button.textContent === data[currentQuestionIndex].correct_answer
+          ) {
+            button.classList.add("correct");
+          }
+        });
+
+        nextButton = createNextButton(currentQuestionIndex, data);
+        quizContainer.appendChild(nextButton);
       }
     }
   }, 1000);
@@ -174,4 +180,32 @@ function showResults() {
   quizContainer.innerHTML = `<p>Your score: ${score} / 5</p>`;
   quizContainer.classList.add("quiz-results");
   timerElement = null;
+}
+
+function createNextButton(currentQuestionIndex, data) {
+  const nextButton = document.createElement("button");
+  nextButton.textContent = "Next question";
+  nextButton.classList.add("start-button");
+  nextButton.addEventListener("click", () =>
+    displayQuestion(currentQuestionIndex + 1, data)
+  );
+
+  return nextButton;
+}
+
+function addScoreAndButtonStyle(
+  correctAnswer,
+  selectedAnswer,
+  isCorrect,
+  answer
+) {
+  if (isCorrect) {
+    score++;
+    selectedAnswer.classList.add("correct");
+  } else {
+    selectedAnswer.classList.add("incorrect");
+  }
+
+  if (correctAnswer.textContent !== answer)
+    correctAnswer.classList.add("correct");
 }
