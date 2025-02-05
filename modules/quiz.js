@@ -11,6 +11,8 @@ let timerInterval;
 let remainingTime = 20;
 let isPaused = false;
 
+let quizHistory = JSON.parse(localStorage.getItem("quizHistory")) || [];
+
 function showQuiz(data, startButton) {
   let currentQuestionIndex = 0;
 
@@ -28,6 +30,20 @@ function displayQuestion(currentQuestionIndex, data) {
 
   if (currentQuestionIndex === data.length) {
     clearInterval(timerInterval);
+
+    const today = new Date();
+
+    const quizResult = {
+      score: score,
+      difficulty: data[0].difficulty,
+      category: data[0].category,
+      date: today.toDateString(),
+    };
+
+    quizHistory.push(quizResult);
+
+    localStorage.setItem("quizHistory", JSON.stringify(quizHistory));
+
     showResults();
     return;
   }
@@ -153,6 +169,10 @@ function updateScoreAndStyle(correctAnswer, selectedAnswer, isCorrect) {
   } else {
     correctAnswer.classList.add("correct");
   }
+
+  document.querySelectorAll(".answer-button").forEach((button) => {
+    button.disabled = true;
+  });
 }
 
 function showCorrectAnswer(data, currentQuestionIndex) {
@@ -162,8 +182,4 @@ function showCorrectAnswer(data, currentQuestionIndex) {
   });
 }
 
-function getScore() {
-  return score;
-}
-
-export { showQuiz, getScore };
+export { showQuiz, score, quizHistory };

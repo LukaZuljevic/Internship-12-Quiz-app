@@ -76,21 +76,4 @@
   margin-top: 20px;
 }
 
-.quiz-results-container {
-  background-color: transparent;
-  box-shadow: none;
-}
 
-.quiz-container .quiz-results {
-  color: white;
-  font-size: 44px;
-  font-weight: bold;
-}
-
-.quiz-container .quiz-results-message {
-  font-size: 44px;
-  font-weight: bold;
-  margin-bottom: 20px;
-  color: white;
-  font-style: italic;
-}
