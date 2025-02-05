@@ -1,4 +1,5 @@
 import { resetAnswerStyles } from "./helpers.js";
+import { showResults } from "./results.js";
 
 const quizContainer = document.querySelector(".quiz-container");
 
@@ -26,6 +27,7 @@ function displayQuestion(currentQuestionIndex, data) {
   remainingTime = 20;
 
   if (currentQuestionIndex === data.length) {
+    clearInterval(timerInterval);
     showResults();
     return;
   }
@@ -160,9 +162,8 @@ function showCorrectAnswer(data, currentQuestionIndex) {
   });
 }
 
-function showResults() {
-  quizContainer.innerHTML = `<p class="quiz-results">Your score: ${score} / 5</p>`;
-  quizContainer.classList.add("quiz-results-container");
+function getScore() {
+  return score;
 }
 
-export { showQuiz };
+export { showQuiz, getScore };

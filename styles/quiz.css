@@ -9,7 +9,8 @@
   margin-top: 20px;
 }
 
-.start-button {
+.start-button,
+.go-back-button {
   background-color: rgb(255, 167, 5);
   color: white;
   font-size: 20px;
@@ -21,7 +22,8 @@
   margin-top: 20px;
 }
 
-.start-button:hover {
+.start-button:hover,
+.go-back-button:hover {
   background-color: rgb(230, 150, 0);
 }
 
@@ -83,4 +85,12 @@
   color: white;
   font-size: 44px;
   font-weight: bold;
+}
+
+.quiz-container .quiz-results-message {
+  font-size: 44px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: white;
+  font-style: italic;
 }
