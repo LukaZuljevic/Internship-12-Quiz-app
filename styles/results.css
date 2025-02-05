@@ -25,8 +25,10 @@
   border-radius: 12px;
   background: transparent;
   max-width: 80%;
-  margin: 20px auto;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+  max-height: 500px;
+  overflow-y: auto;
+  margin-top: 64px;
 }
 
 .quiz-history-item {

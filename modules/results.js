@@ -1,4 +1,5 @@
 import { score, quizHistory } from "./quiz.js";
+import { createResult, createGoBackButton } from "./helpers.js";
 
 const resultMessages = [
   "Moras bolje!",
@@ -12,17 +13,13 @@ const quizContainer = document.querySelector(".quiz-container");
 const body = document.querySelector("body");
 
 function showResults() {
-  const result = document.createElement("p");
-  result.classList.add("quiz-results");
-  result.textContent = `Your score: ${score} / 5`;
+  const result = createResult(score);
 
   const message = document.createElement("p");
   message.classList.add("quiz-results-message");
   message.textContent = score < 2 ? resultMessages[0] : resultMessages[score];
 
-  const goBackButton = document.createElement("button");
-  goBackButton.classList.add("go-back-button");
-  goBackButton.textContent = "Go back";
+  const goBackButton = createGoBackButton();
   goBackButton.addEventListener("click", () => location.reload());
 
   quizContainer.appendChild(message);
@@ -30,8 +27,6 @@ function showResults() {
   quizContainer.appendChild(goBackButton);
 
   quizContainer.classList.add("quiz-results-container");
-
-  showHistory();
 }
 
 function showHistory() {
@@ -49,4 +44,4 @@ function showHistory() {
   body.appendChild(historyContainer);
 }
 
-export { showResults };
+export { showResults, showHistory };

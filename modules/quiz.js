@@ -1,5 +1,10 @@
-import { resetAnswerStyles } from "./helpers.js";
-import { showResults } from "./results.js";
+import {
+  resetAnswerStyles,
+  createNextButton,
+  createAnswerButton,
+  disableAnswerButtons,
+} from "./helpers.js";
+import { showHistory, showResults } from "./results.js";
 
 const quizContainer = document.querySelector(".quiz-container");
 
@@ -15,36 +20,19 @@ let quizHistory = JSON.parse(localStorage.getItem("quizHistory")) || [];
 
 function showQuiz(data, startButton) {
   let currentQuestionIndex = 0;
-
   startButton.style.display = "none";
   quizContainer.style.display = "block";
-
+  
   displayQuestion(currentQuestionIndex, data);
 }
 
 function displayQuestion(currentQuestionIndex, data) {
   quizContainer.innerHTML = "";
-
   isPaused = false;
   remainingTime = 20;
 
   if (currentQuestionIndex === data.length) {
-    clearInterval(timerInterval);
-
-    const today = new Date();
-
-    const quizResult = {
-      score: score,
-      difficulty: data[0].difficulty,
-      category: data[0].category,
-      date: today.toDateString(),
-    };
-
-    quizHistory.push(quizResult);
-
-    localStorage.setItem("quizHistory", JSON.stringify(quizHistory));
-
-    showResults();
+    endQuiz(data);
     return;
   }
 
@@ -54,12 +42,28 @@ function displayQuestion(currentQuestionIndex, data) {
 
   appendAnswers(currentQuestionIndex, data, item);
 
-  setQuestionTimer(currentQuestionIndex, data, remainingTime);
+  setQuestionTimer(currentQuestionIndex, data);
+}
+
+function endQuiz(data) {
+  clearInterval(timerInterval);
+  const today = new Date();
+  const quizResult = {
+    score: score,
+    difficulty: data[0].difficulty,
+    category: data[0].category,
+    date: today.toDateString(),
+  };
+
+  quizHistory.push(quizResult);
+  localStorage.setItem("quizHistory", JSON.stringify(quizHistory));
+
+  showResults();
+  showHistory();
 }
 
 function appendQuestion(item) {
   const question = document.createElement("h3");
-
   question.textContent = item.question;
   quizContainer.appendChild(question);
 }
@@ -74,11 +78,7 @@ function appendAnswers(currentQuestionIndex, data, item) {
   let correctAnswer;
 
   answers.forEach((answer) => {
-    const answerBlock = document.createElement("button");
-
-    answerBlock.textContent = answer;
-    answerBlock.classList.add("answer-button");
-
+    const answerBlock = createAnswerButton(answer);
     if (answerBlock.textContent === item.correct_answer)
       correctAnswer = answerBlock;
 
@@ -88,18 +88,14 @@ function appendAnswers(currentQuestionIndex, data, item) {
 
       selectedAnswer = event.target;
       selectedAnswer.classList.add("selected-answer");
-
-      if (!isPaused) isPaused = true;
+      isPaused = true;
 
       confirmTimeout = setTimeout(() => {
-        const isConfirmed = checkAnswer(correctAnswer, selectedAnswer);
-
-        if (isConfirmed) {
-          nextButton = createNextButton(currentQuestionIndex, data);
-          quizContainer.appendChild(nextButton);
+        if (checkAnswer(correctAnswer, selectedAnswer)) {
+          addNextButton(currentQuestionIndex, data);
         } else {
           isPaused = false;
-          setQuestionTimer(currentQuestionIndex, data, remainingTime);
+          setQuestionTimer(currentQuestionIndex, data);
         }
       }, 2000);
     });
@@ -108,13 +104,11 @@ function appendAnswers(currentQuestionIndex, data, item) {
   });
 }
 
-function setQuestionTimer(currentQuestionIndex, data, resumeTime) {
+function setQuestionTimer(currentQuestionIndex, data) {
   clearInterval(timerInterval);
-  remainingTime = resumeTime;
 
-  if (!timerElement || !quizContainer.contains(timerElement)) {
+  if (!timerElement) {
     timerElement = document.createElement("p");
-
     timerElement.classList.add("timer");
     quizContainer.appendChild(timerElement);
   }
@@ -125,14 +119,12 @@ function setQuestionTimer(currentQuestionIndex, data, resumeTime) {
     if (!isPaused) {
       remainingTime--;
       timerElement.textContent = `Time left: ${remainingTime}s`;
-
       if (remainingTime === 0) {
         clearInterval(timerInterval);
 
-        showCorrectAnswer(data, currentQuestionIndex);
-        nextButton = createNextButton(currentQuestionIndex, data);
-
-        quizContainer.appendChild(nextButton);
+        showCorrectAnswer(data[currentQuestionIndex].correct_answer);
+        addNextButton(currentQuestionIndex, data);
+        disableAnswerButtons();
       }
     }
   }, 1000);
@@ -149,37 +141,28 @@ function checkAnswer(correctAnswer, selectedAnswer) {
   return true;
 }
 
-function createNextButton(currentQuestionIndex, data) {
-  const nextButton = document.createElement("button");
-
-  nextButton.textContent = "Next question";
-  nextButton.classList.add("start-button");
-  nextButton.addEventListener("click", () =>
-    displayQuestion(currentQuestionIndex + 1, data)
-  );
-
-  return nextButton;
-}
-
 function updateScoreAndStyle(correctAnswer, selectedAnswer, isCorrect) {
   selectedAnswer.classList.add(isCorrect ? "correct" : "incorrect");
-
   if (isCorrect) {
     score++;
   } else {
     correctAnswer.classList.add("correct");
   }
+  disableAnswerButtons();
+}
 
+function showCorrectAnswer(correctText) {
   document.querySelectorAll(".answer-button").forEach((button) => {
-    button.disabled = true;
+    if (button.textContent === correctText) button.classList.add("correct");
   });
 }
 
-function showCorrectAnswer(data, currentQuestionIndex) {
-  document.querySelectorAll(".answer-button").forEach((button) => {
-    if (button.textContent === data[currentQuestionIndex].correct_answer)
-      button.classList.add("correct");
-  });
+function addNextButton(currentQuestionIndex, data) {
+  nextButton = createNextButton();
+  nextButton.addEventListener("click", () =>
+    displayQuestion(currentQuestionIndex + 1, data)
+  );
+  quizContainer.appendChild(nextButton);
 }
 
 export { showQuiz, score, quizHistory };
