@@ -13,7 +13,7 @@ submitButton.addEventListener("click", async (event) => {
   const gameType = document.querySelector("#game-type").value;
 
   const params = new URLSearchParams({
-    amount: 2,
+    amount: 5,
     difficulty: difficulty,
     type: gameType,
   });
