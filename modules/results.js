@@ -17,7 +17,8 @@ function showResults() {
 
   const message = document.createElement("p");
   message.classList.add("quiz-results-message");
-  message.textContent = score < 2 ? resultMessages[0] : resultMessages[score];
+  message.textContent =
+    score < 2 ? resultMessages[0] : resultMessages[score - 1];
 
   const goBackButton = createGoBackButton();
   goBackButton.addEventListener("click", () => location.reload());

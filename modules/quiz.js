@@ -11,6 +11,7 @@ const quizContainer = document.querySelector(".quiz-container");
 let nextButton = null;
 let score = 0;
 
+let scoreElement = null;
 let timerElement = null;
 let timerInterval;
 let remainingTime = 20;
@@ -22,7 +23,7 @@ function showQuiz(data, startButton) {
   let currentQuestionIndex = 0;
   startButton.style.display = "none";
   quizContainer.style.display = "block";
-  
+
   displayQuestion(currentQuestionIndex, data);
 }
 
@@ -38,6 +39,8 @@ function displayQuestion(currentQuestionIndex, data) {
 
   const item = data[currentQuestionIndex];
 
+  appendScore();
+
   appendQuestion(item);
 
   appendAnswers(currentQuestionIndex, data, item);
@@ -47,6 +50,7 @@ function displayQuestion(currentQuestionIndex, data) {
 
 function endQuiz(data) {
   clearInterval(timerInterval);
+
   const today = new Date();
   const quizResult = {
     score: score,
@@ -60,6 +64,13 @@ function endQuiz(data) {
 
   showResults();
   showHistory();
+}
+
+function appendScore() {
+  scoreElement = document.createElement("p");
+  scoreElement.classList.add("score");
+  scoreElement.textContent = `Score: ${score} / 5`;
+  quizContainer.appendChild(scoreElement);
 }
 
 function appendQuestion(item) {
@@ -107,11 +118,11 @@ function appendAnswers(currentQuestionIndex, data, item) {
 function setQuestionTimer(currentQuestionIndex, data) {
   clearInterval(timerInterval);
 
-  if (!timerElement) {
-    timerElement = document.createElement("p");
-    timerElement.classList.add("timer");
-    quizContainer.appendChild(timerElement);
-  }
+  if (timerElement) timerElement.remove();
+
+  timerElement = document.createElement("p");
+  timerElement.classList.add("timer");
+  quizContainer.appendChild(timerElement);
 
   timerElement.textContent = `Time left: ${remainingTime}s`;
 
@@ -143,11 +154,14 @@ function checkAnswer(correctAnswer, selectedAnswer) {
 
 function updateScoreAndStyle(correctAnswer, selectedAnswer, isCorrect) {
   selectedAnswer.classList.add(isCorrect ? "correct" : "incorrect");
+
   if (isCorrect) {
     score++;
+    scoreElement.textContent = `Score: ${score} / 5`;
   } else {
     correctAnswer.classList.add("correct");
   }
+
   disableAnswerButtons();
 }
 
